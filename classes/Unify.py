@@ -1,5 +1,7 @@
 import operator
 
+from Cons import Cons
+
 from Variable import Variable
 
 class Unify:

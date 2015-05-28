@@ -83,7 +83,7 @@ def init():
 # Infix builtin operators
 __builtin__.IF= IF
 __builtin__.THEN= THEN
-__builtin__.THAT= THAT
+#__builtin__.THAT= THAT
 
 # internal types symbols
 defsym("bools")

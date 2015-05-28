@@ -73,8 +73,8 @@ class KB:
     # Prove backward rules, if wm is True it also checks
     # ground facts in the wm.
     def prove(self, goals, wm=False):
-        gvars = self.get_variables(goals)
-        self.bcprove(self, goals, {}, wm, gvars, Printer().print_args_and_return_env)
+        gvars = self.get_variables(goals)        
+        self.bcprove(goals, {}, wm, gvars)
 
 # Schema for backward proof.
 # bcprove(self,goals,env,wm,gvars,ret_fun)
@@ -83,34 +83,51 @@ class KB:
 # wm --> bolean value, use or not use wm facts in the prove.
 # gvars --> goal variables
 # ret_fun --> function to return at the end (optional).
-    def bcprove(self,goals,env,wm,gvars,*functor):
-        iteratorGoals = goals.__iter__()
+    def bcprove(self,goals,env,wm,gvars):
+        #iteratorGoals = goals.__iter__()
+        print goals
 
-        try:
-            while True:
-                goal = iteratorGoal.next()
-                key = self.make_key(goal)
+        for goal in goals: #[(append, [1,2],[3],X)]:
+        #try:
+            #while True:
+                #goal = iteratorGoal.next()
 
-                iteratorBcr = self.bcr[key].__iter__()
-                try:
-                    while True:
-                        r = unifier.unify(iteratorBcr.next(), goal, env) 
-                        
-                        if r == None:
-                            return False 
+            key = self.make_key(goal)
 
-                        #TODO capire come scrivere questa parte
-                        self.bcprove(self, goals, r, wm, self.get_variables(goals), Printer().print_args_and_return_env)
-                except StopIteration:
-                    #fail
-                    return False
-        except StopIteration:
+            iteratorBcr = self.bcr[key].__iter__()
+            try:
+                while True:
+                    unifier = Unify()
+                    i = iteratorBcr.next()
+
+                    print "i=",i," goal=",goal
+
+                    r = unifier.unify(i, goal, env) 
+
+                    print "r=",r,"\n"
+                    
+                    if r == None:
+                        return False 
+
+                    #TODO capire come scrivere questa parte
+                    self.bcprove(self, goals.remove(goal), env.append(r), wm, self.get_variables(goals))
+            except StopIteration:
+                #fail
+                print "StopIteration\n"
+                return False
+        
+        #except StopIteration:
             #success
-            for x in gvars:
-                #r = Unifier.unify(x, )
-                print x.name+": "#+str(printer.deref(x,r))
+        
+        print "bcprove endfor\n"
 
-            if printer.query_yes_no("more solutions?","no")== "no":
-                return True
+        printer = Printer()
+
+        for x in gvars:
+            #r = Unifier.unify(x, )
+            print x.name+": "#+str(printer.deref(x,r))
+        
+        if printer.query_yes_no("more solutions?","no")== "no":
+            return True
 
 #        return True
