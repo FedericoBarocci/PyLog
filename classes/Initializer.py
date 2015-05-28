@@ -34,7 +34,7 @@ def deflop(lop):
 
 THEN = Infix(lambda x,y:KB.__kb__.make_fc_rule(x,y))
 IF = Infix(lambda x,y:KB.__kb__.make_bc_rule(x,y))
-THAT = Infix(lambda x,y:KB.__kb__.make_and_concept(x,y))
+#THAT = Infix(lambda x,y:KB.__kb__.make_and_concept(x,y))
 
 NOT_GIVEN   = Symbol("NOT_GIVEN")
 NOT_FOUND   = Symbol("NOT_FOUND")

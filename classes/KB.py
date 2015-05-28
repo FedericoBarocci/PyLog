@@ -74,7 +74,7 @@ class KB:
     # ground facts in the wm.
     def prove(self, goals, wm=False):
         gvars = self.get_variables(goals)
-        bcprove(self,goals,{},wm,gvars,print_args_and_return_env)
+        self.bcprove(self, goals, {}, wm, gvars, Printer().print_args_and_return_env)
 
 # Schema for backward proof.
 # bcprove(self,goals,env,wm,gvars,ret_fun)
@@ -83,3 +83,34 @@ class KB:
 # wm --> bolean value, use or not use wm facts in the prove.
 # gvars --> goal variables
 # ret_fun --> function to return at the end (optional).
+    def bcprove(self,goals,env,wm,gvars,*functor):
+        iteratorGoals = goals.__iter__()
+
+        try:
+            while True:
+                goal = iteratorGoal.next()
+                key = self.make_key(goal)
+
+                iteratorBcr = self.bcr[key].__iter__()
+                try:
+                    while True:
+                        r = unifier.unify(iteratorBcr.next(), goal, env) 
+                        
+                        if r == None:
+                            return False 
+
+                        #TODO capire come scrivere questa parte
+                        self.bcprove(self, goals, r, wm, self.get_variables(goals), Printer().print_args_and_return_env)
+                except StopIteration:
+                    #fail
+                    return False
+        except StopIteration:
+            #success
+            for x in gvars:
+                #r = Unifier.unify(x, )
+                print x.name+": "#+str(printer.deref(x,r))
+
+            if printer.query_yes_no("more solutions?","no")== "no":
+                return True
+
+#        return True

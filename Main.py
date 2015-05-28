@@ -58,7 +58,7 @@ kb.ask((m, X,Y))
 (union, H|T,X,U) |IF| ((member,H,X),(union,T,X,U))
 (union, H|T,S,H|U) |IF| (union,T,S,U)
 
-#print kb.bcr
+print kb.bcr
 
 #tests
 kb.prove([(append, [1,2],[3],X)])
