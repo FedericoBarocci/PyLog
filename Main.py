@@ -58,4 +58,13 @@ kb.ask((m, X,Y))
 (union, H|T,X,U) |IF| ((member,H,X),(union,T,X,U))
 (union, H|T,S,H|U) |IF| (union,T,S,U)
 
-print kb.bcr
+#print kb.bcr
+
+#tests
+kb.prove([(append, [1,2],[3],X)])
+kb.prove([(append, X, Y, [1,2,3])])
+kb.prove([(member, X, [1,2,3,5,6])])
+kb.prove([(reverse, [1,2,3,5,6],X)])
+kb.prove([(reverse, X, [1,2,3,5,6])])
+kb.prove([(testu, Y, [1,2,3])])
+kb.prove([(union, [2,3,7,8], [1,2,3,4,5,6], X)])
