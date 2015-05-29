@@ -100,11 +100,12 @@ class KB:
                     unifier = Unify()
                     i = iteratorBcr.next()
 
-                    print "i=",i," goal=",goal
+                    print "i=",i[0]," goal=",goal
 
                     r = unifier.unify(i, goal, env) 
 
                     print "r=",r,"\n"
+                    return True
                     
                     if r == None:
                         return False 
