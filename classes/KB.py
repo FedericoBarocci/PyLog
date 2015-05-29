@@ -2,6 +2,7 @@ from Variable import Variable
 from Printer import Printer
 from FSymbol import FSymbol
 from Unify import Unify
+from Cons import Cons
 
 class KB:
     """"A common Working Memory following the OCML style 
@@ -19,6 +20,47 @@ class KB:
 
     def make_key(self,tuple):
         return str(tuple[0])+str(len(tuple)-1)
+
+    def printRule(self, element):
+        if element == None:
+            return str(None)
+        elif isinstance(element, str) or isinstance(element, int) or isinstance(element, bool):
+            return str(element)
+        elif isinstance(element, Variable):# or isinstance(element, instance):
+            return element.__str__()
+        elif (isinstance(element,Cons)):
+            return " | ".join( [ self.printRule(element.car), self.printRule(element.cdr) ])
+
+        list = []
+        
+        if type(element) == type([]):
+            for i in element:
+                list.append(self.printRule(i))
+            return "[" + ", ".join(list) + "]"
+
+        if type(element) == type({}):
+            for i in element:
+                list.append( self.printRule(i) + " : " + self.printRule(element[i]) )
+            return "{" + ", ".join(list) + "}"
+
+        #print type(element)
+        for i in element:
+            if (isinstance(i,Cons)):
+                list.append( " | ".join( [ self.printRule(i.car), self.printRule(i.cdr) ]))
+            elif type(i) == type((1, )):
+                list.append(str(self.printRule(i)))
+            else:
+                #print type(i)
+                list.append(str(i))
+
+        return "(" + ", ".join(list) + ")"
+
+    def printRules(self):
+        for key in self.bcr:
+            for element in self.bcr[key]:
+                print self.printRule(element[0]) + " :- " + self.printRule(element[1]) + "."
+        
+        print ""
 
     def get_variables(self,sequence):
         vlist = []
@@ -70,6 +112,34 @@ class KB:
         "Remove the sentence from the KB"
         abstract
 
+    def makeResolvent(self, clausole, unificator):
+        #resolvent = clausole
+        resolvent = ()
+        print clausole
+        print unificator
+        print resolvent
+
+        for i in clausole:
+            
+
+            if str(i) in unificator:
+                print i,"in",unificator
+                resolvent += (unificator[i],)
+            else:
+                print i,"not in",unificator
+                resolvent += (str(i),)
+
+            print resolvent
+            # resolvent[i] = clausole[0][i]
+            # print resolvent[i]
+            # for j in unificator:
+            #     if i == j:
+            #         resolvent[i] = unificator[j]
+
+        print "resolvent=",self.printRule(resolvent)
+
+        return resolvent
+
     # Prove backward rules, if wm is True it also checks
     # ground facts in the wm.
     def prove(self, goals, wm=False):
@@ -100,18 +170,34 @@ class KB:
                     unifier = Unify()
                     i = iteratorBcr.next()
 
-                    print "i=",i[0]," goal=",goal
-
-                    r = unifier.unify(i, goal, env) 
-
-                    print "r=",r,"\n"
-                    return True
+                    print " > i=",self.printRule(i[0])
+                    print " > goal=",self.printRule(goal)
+                    print " > env=",self.printRule(env)
                     
-                    if r == None:
-                        return False 
 
-                    #TODO capire come scrivere questa parte
-                    self.bcprove(self, goals.remove(goal), env.append(r), wm, self.get_variables(goals))
+                    newenv = {}
+                    test = True
+                    for j in range(len(i[0])):
+                        q = unifier.unify(i[0][j], goal[j], env) 
+                        
+                        if q is None:
+                            test = False
+                            #break
+                        else:
+                            newenv.update(q)
+
+                    print " !> newenv=",self.printRule(newenv), "TEST",str(test)
+                    print ""
+                    
+                    if test:
+                        #if not(None in newenv):
+                            #TODO capire come scrivere questa parte
+                            #newenv = {}
+                            #for x in r:
+                            #    for xi in x:
+                            #        newenv[xi] = x[xi]
+
+                        self.bcprove([self.makeResolvent(i[1], newenv)], newenv, wm, self.get_variables(goals))
             except StopIteration:
                 #fail
                 print "StopIteration\n"

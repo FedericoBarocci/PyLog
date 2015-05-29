@@ -1,6 +1,6 @@
 from Cons import Cons
 
-class Symbol():
+class Symbol(object):
     
     LogicalOperators = ["AND","OR","IF","IFF","NOT"]
 
