@@ -1,3 +1,5 @@
+import copy
+
 from Variable import Variable
 from Printer import Printer
 from FSymbol import FSymbol
@@ -65,10 +67,23 @@ class KB:
     def get_variables(self,sequence):
         vlist = []
         for x in sequence:
-            if type(x) == type((1, )) or type(x) == type([]):
+            if isinstance(x,Cons): 
+                if isinstance(x.car,Variable):
+                    vlist.append(x.car)
+                else:
+                    vlist += self.get_variables(x.car)
+                if isinstance(x.cdr,Variable):
+                    vlist.append(x.cdr)
+                else:
+                    vlist += self.get_variables(x.cdr)
+            elif type(x) == type((1, )) or type(x) == type([]):
                 vlist += self.get_variables(x)
             elif isinstance(x,Variable):
                 vlist.append(x)
+            #if type(x) == type((1, )) or type(x) == type([]):
+            #    vlist += self.get_variables(x)
+            #elif isinstance(x,Variable):
+            #    vlist.append(x)
         return vlist
 
     def tell(self, tuple):
@@ -113,30 +128,13 @@ class KB:
         abstract
 
     def makeResolvent(self, clausole, unificator):
-        #resolvent = clausole
         resolvent = ()
-        print clausole
-        print unificator
-        print resolvent
 
         for i in clausole:
-            
-
             if str(i) in unificator:
-                print i,"in",unificator
-                resolvent += (unificator[i],)
+                resolvent += (unificator[str(i)],)
             else:
-                print i,"not in",unificator
-                resolvent += (str(i),)
-
-            print resolvent
-            # resolvent[i] = clausole[0][i]
-            # print resolvent[i]
-            # for j in unificator:
-            #     if i == j:
-            #         resolvent[i] = unificator[j]
-
-        print "resolvent=",self.printRule(resolvent)
+                resolvent += (i,)
 
         return resolvent
 
@@ -144,7 +142,7 @@ class KB:
     # ground facts in the wm.
     def prove(self, goals, wm=False):
         gvars = self.get_variables(goals)        
-        self.bcprove(goals, {}, wm, gvars)
+        self.bcprove(goals, {}, wm, gvars, 0)
 
 # Schema for backward proof.
 # bcprove(self,goals,env,wm,gvars,ret_fun)
@@ -153,7 +151,7 @@ class KB:
 # wm --> bolean value, use or not use wm facts in the prove.
 # gvars --> goal variables
 # ret_fun --> function to return at the end (optional).
-    def bcprove(self,goals,env,wm,gvars):
+    def bcprove(self,goals,env,wm,gvars, level):
         #iteratorGoals = goals.__iter__()
         print goals
 
@@ -162,24 +160,44 @@ class KB:
             #while True:
                 #goal = iteratorGoal.next()
 
-            key = self.make_key(goal)
+            if type(goal[0]) == type((1, )):
+                key = self.make_key(goal[0])
+            else:
+                key = self.make_key(goal)
 
             iteratorBcr = self.bcr[key].__iter__()
             try:
                 while True:
                     unifier = Unify()
-                    i = iteratorBcr.next()
 
-                    print " > i=",self.printRule(i[0])
+                    kbRule = iteratorBcr.next()
+                    #ivars = self.get_variables(kbRule)
+
+                    freshRule = copy.deepcopy(kbRule)
+                    frvars = self.get_variables(freshRule)
+
+                    print " > frvars=",self.printRule(frvars)
+                    
+                    for i in frvars:
+                        i.rename(level)
+
+                    print " > i=",self.printRule(kbRule[0])
+                    print " > j=",self.printRule(freshRule[0])
                     print " > goal=",self.printRule(goal)
                     print " > env=",self.printRule(env)
-                    
+                    print " > gvars=",self.printRule(gvars)
 
                     newenv = {}
+                    newenv.update(env) #{}
                     test = True
-                    for j in range(len(i[0])):
-                        q = unifier.unify(i[0][j], goal[j], env) 
-                        
+
+                    for i in range(len(freshRule[0])):
+                        if type(goal[0]) == type((1, )):
+                            q = unifier.unify(freshRule[0][i], goal[0][i], newenv)
+                        else:
+                            q = unifier.unify(freshRule[0][i], goal[i], newenv)
+                        #q = unifier.unify(freshRule[0][i], goal[i], newenv) 
+                        print self.printRule(q)
                         if q is None:
                             test = False
                             #break
@@ -190,6 +208,20 @@ class KB:
                     print ""
                     
                     if test:
+                        newenv.update(env)
+                        print " > newenv=",self.printRule(newenv)
+
+                        if kbRule[1] == True:
+                            printer = Printer()
+
+                            for x in gvars:
+                                #if isinstance(x, Variable):
+                                print x.name+": "+str(printer.deref(x, newenv))
+                            
+                            if printer.query_yes_no("more solutions?","no")== "no":
+                                return True
+                            else:
+                                return False
                         #if not(None in newenv):
                             #TODO capire come scrivere questa parte
                             #newenv = {}
@@ -197,7 +229,8 @@ class KB:
                             #    for xi in x:
                             #        newenv[xi] = x[xi]
 
-                        self.bcprove([self.makeResolvent(i[1], newenv)], newenv, wm, self.get_variables(goals))
+                        #return self.bcprove([self.makeResolvent(freshRule[1], newenv)], newenv, wm, self.get_variables(goals), level+1)
+                        return self.bcprove([kbRule[1]], newenv, wm, self.get_variables(goals), level+1)
             except StopIteration:
                 #fail
                 print "StopIteration\n"

@@ -41,6 +41,7 @@ class Unify:
         elif isinstance(y,Cons) and operator.isSequenceType(x):
             return self.unify(y.cdr, x[1:], self.unify(y.car, x[0], s))
         else:
+            print "nope"
             return None
 
     def unify_var(self, var, x, s):

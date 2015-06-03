@@ -63,7 +63,8 @@ kb.tell((m, [1,2], [3,4]))
 kb.printRules()
 
 #tests
-kb.prove([(append, [1,2],[3],X)])
+kb.prove([(append, [1], [2], X)])
+#kb.prove([(append, [1,2],[3],X)])
 #kb.prove([(append, X, Y, [1,2,3])])
 #kb.prove([(member, 5, [1,2,3,5,6])])
 #kb.prove([(member, X, [1,2,3,5,6])])
