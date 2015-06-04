@@ -1,4 +1,5 @@
 import copy
+from sys import stdin
 
 from Variable import Variable
 from Printer import Printer
@@ -142,7 +143,8 @@ class KB:
     # ground facts in the wm.
     def prove(self, goals, wm=False):
         gvars = self.get_variables(goals)        
-        self.bcprove(goals, {}, wm, gvars, 0)
+        if not self.bcprove(goals, {}, wm, gvars, 0):
+            print "False"
 
 # Schema for backward proof.
 # bcprove(self,goals,env,wm,gvars,ret_fun)
@@ -151,90 +153,105 @@ class KB:
 # wm --> bolean value, use or not use wm facts in the prove.
 # gvars --> goal variables
 # ret_fun --> function to return at the end (optional).
-    def bcprove(self,goals,env,wm,gvars, level):
-        #iteratorGoals = goals.__iter__()
-        print goals
 
-        for goal in goals: #[(append, [1,2],[3],X)]:
-        #try:
-            #while True:
-                #goal = iteratorGoal.next()
 
+    def resolvetuple(self, goals, env, wm, gvars, level):
+        
+
+        #for goal in goals:
+        goal = goals.pop(0)
+        key = self.make_key(goal)
+        iteratorBcr = self.bcr[key].__iter__()
+        #kbRule = iteratorBcr.next()
+
+        unifier = Unify()
+        
+        for kbRule in iteratorBcr:
+
+            freshRule = copy.deepcopy(kbRule)
+            frvars = self.get_variables(freshRule)
+
+            # print " > frvars=",self.printRule(frvars)
+            
+            for i in frvars:
+                i.rename(level)
+
+            # print " > i=",self.printRule(kbRule[0])
+            # print " > j=",self.printRule(freshRule[0])
+            # print " > goal=",self.printRule(goal)
+            # print " > env=",self.printRule(env)
+            # print " > gvars=",self.printRule(gvars)
+
+            newenv = {}
+            newenv.update(env) #{}
+            test = True
+
+            for i in range(len(freshRule[0])):
+                if type(goal[0]) == type((1, )):
+                    q = unifier.unify(freshRule[0][i], goal[0][i], newenv)
+                else:
+                    q = unifier.unify(freshRule[0][i], goal[i], newenv)
+                #q = unifier.unify(freshRule[0][i], goal[i], newenv) 
+                #print self.printRule(q)
+                if q is None:
+                    test = False
+                    #break
+                else:
+                    newenv.update(q)
+
+            # print " !> newenv=",self.printRule(newenv), "TEST",str(test)
+            # print ""
+            
+            if test:
+                newgoals = copy.deepcopy(goals)
+                
+                # print " !> freshRule[1]=",self.printRule(freshRule[1])
+                
+                if not isinstance(freshRule[1], bool):
+                    newgoals.insert(0,freshRule[1])
+
+                # print " !> newgoals=",self.printRule(newgoals)
+                #stdin.readline()
+
+                if self.bcprove(newgoals, newenv, wm, gvars, level+1):
+                    return True
+                # else:
+                #     print "BACKTRACK - level", level
+
+        return False
+
+    def bcprove(self,goals,env,wm,gvars,level):
+        elements = []
+
+        for goal in goals:    
             if type(goal[0]) == type((1, )):
-                key = self.make_key(goal[0])
+                for tup in goal:
+                    elements.append(tup)
             else:
-                key = self.make_key(goal)
+                elements.append(goal)
 
-            iteratorBcr = self.bcr[key].__iter__()
-            try:
-                while True:
-                    unifier = Unify()
+        print "\n#", level, "#", elements
 
-                    kbRule = iteratorBcr.next()
-                    #ivars = self.get_variables(kbRule)
+        if len(elements) == 0:
+            printer = Printer()
 
-                    freshRule = copy.deepcopy(kbRule)
-                    frvars = self.get_variables(freshRule)
+            print "True\n"
 
-                    print " > frvars=",self.printRule(frvars)
-                    
-                    for i in frvars:
-                        i.rename(level)
-
-                    print " > i=",self.printRule(kbRule[0])
-                    print " > j=",self.printRule(freshRule[0])
-                    print " > goal=",self.printRule(goal)
-                    print " > env=",self.printRule(env)
-                    print " > gvars=",self.printRule(gvars)
-
-                    newenv = {}
-                    newenv.update(env) #{}
-                    test = True
-
-                    for i in range(len(freshRule[0])):
-                        if type(goal[0]) == type((1, )):
-                            q = unifier.unify(freshRule[0][i], goal[0][i], newenv)
-                        else:
-                            q = unifier.unify(freshRule[0][i], goal[i], newenv)
-                        #q = unifier.unify(freshRule[0][i], goal[i], newenv) 
-                        #print self.printRule(q)
-                        if q is None:
-                            test = False
-                            #break
-                        else:
-                            newenv.update(q)
-
-                    print " !> newenv=",self.printRule(newenv), "TEST",str(test)
-                    print ""
-                    
-                    if test:
-                        #newenv.update(env)
-                        #print " > newenv=",self.printRule(newenv)
-
-                        if kbRule[1] == True:
-                            printer = Printer()
-
-                            print "True\n"
-
-                            for x in gvars:
-                                #if isinstance(x, Variable):
-                                print x.name+": "+str(printer.deref(x, newenv))
-                            
-                            if printer.query_yes_no("more solutions?","no")== "no":
-                                return True
-                            #else:
-                            #    return False
-                        #if not(None in newenv):
-                            #TODO capire come scrivere questa parte
-                            #newenv = {}
-                            #for x in r:
-                            #    for xi in x:
-                            #        newenv[xi] = x[xi]
-
-                        #return self.bcprove([self.makeResolvent(freshRule[1], newenv)], newenv, wm, self.get_variables(goals), level+1)
-                        else:
-                            return self.bcprove([freshRule[1]], newenv, wm, gvars, level+1)
-            except StopIteration:
-                #fail
-                print "StopIteration\n"
+            for x in gvars:
+                #if isinstance(x, Variable):
+                print x.name+": "+str(printer.deref(x, env))
+            
+            if printer.query_yes_no("more solutions?","no")== "no":
+                return True
+            else:
                 return False
+
+        return self.resolvetuple(elements,env,wm,gvars,level)
+
+            # if result == None:
+            #     test = False
+            # elif isinstance(result, bool):
+            #     return result
+            # else:
+            #     newenv.update(result)
+            
