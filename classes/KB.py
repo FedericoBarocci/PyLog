@@ -197,7 +197,7 @@ class KB:
                         else:
                             q = unifier.unify(freshRule[0][i], goal[i], newenv)
                         #q = unifier.unify(freshRule[0][i], goal[i], newenv) 
-                        print self.printRule(q)
+                        #print self.printRule(q)
                         if q is None:
                             test = False
                             #break
@@ -208,11 +208,13 @@ class KB:
                     print ""
                     
                     if test:
-                        newenv.update(env)
-                        print " > newenv=",self.printRule(newenv)
+                        #newenv.update(env)
+                        #print " > newenv=",self.printRule(newenv)
 
                         if kbRule[1] == True:
                             printer = Printer()
+
+                            print "True\n"
 
                             for x in gvars:
                                 #if isinstance(x, Variable):
@@ -220,8 +222,8 @@ class KB:
                             
                             if printer.query_yes_no("more solutions?","no")== "no":
                                 return True
-                            else:
-                                return False
+                            #else:
+                            #    return False
                         #if not(None in newenv):
                             #TODO capire come scrivere questa parte
                             #newenv = {}
@@ -230,24 +232,9 @@ class KB:
                             #        newenv[xi] = x[xi]
 
                         #return self.bcprove([self.makeResolvent(freshRule[1], newenv)], newenv, wm, self.get_variables(goals), level+1)
-                        return self.bcprove([kbRule[1]], newenv, wm, self.get_variables(goals), level+1)
+                        else:
+                            return self.bcprove([freshRule[1]], newenv, wm, gvars, level+1)
             except StopIteration:
                 #fail
                 print "StopIteration\n"
                 return False
-        
-        #except StopIteration:
-            #success
-        
-        print "bcprove endfor\n"
-
-        printer = Printer()
-
-        for x in gvars:
-            #r = Unifier.unify(x, )
-            print x.name+": "#+str(printer.deref(x,r))
-        
-        if printer.query_yes_no("more solutions?","no")== "no":
-            return True
-
-#        return True
