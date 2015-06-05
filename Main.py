@@ -45,8 +45,13 @@ kb.tell((m, [1,2], [3,4]))
 (append, [], X, X) |IF| True
 (append, X|T, Y, X|U) |IF| (append, T, Y, U)
 
-(reverse, [], []) |IF| True
-(reverse, X|T, Y) |IF| ((reverse, T, U),(append, U, [X], Y))
+#(reverse, [], []) |IF| True
+#(reverse, X|T, Y) |IF| ((reverse, T, U),(append, U, [X], Y))
+
+(reverse, X1, Y1) |IF| (reverse, X1, [], Y1, Y1)
+(reverse, [], Y1, Y1, []) |IF| True
+(reverse, X|X1, R1, Y1, _|B) |IF| (reverse, X1, X|R1, Y1, B)
+
 
 (member, X, X|T) |IF| True
 (member, Y, X|T) |IF| (member, Y, T)
@@ -70,8 +75,9 @@ kb.printRules()
 # kb.prove([(member, X, [1,2,3,4,5,6])])
 # kb.prove([(reverse, [1,2,3,5,6],X)])
 # kb.prove([(reverse, [1,2,3],X)])
-kb.prove([(reverse, X, [1,2,3,5,6])])
-kb.prove([(testu, Y, [1,2,3])])
-kb.prove([(testu, Y, [1,1,1])])
-kb.prove([(union, [2,3,7,8], [1,2,3,4,5,6], X)])
-kb.prove([(union, [1], [2], X)])
+#kb.prove([(reverse, X, [1,2,3,5,6])])
+kb.prove([(reverse, X, [1])])
+# kb.prove([(testu, Y, [1,2,3])])
+# kb.prove([(testu, Y, [1,1,1])])
+# kb.prove([(union, [2,3,7,8], [1,2,3,4,5,6], X)])
+# kb.prove([(union, [1], [2], X)])
