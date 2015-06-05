@@ -160,6 +160,13 @@ class KB:
 
         #for goal in goals:
         goal = goals.pop(0)
+
+        if isinstance(goal, bool) and goal:
+            #self.resolvetuple(goals, env, wm, gvars, level)
+            return self.bcprove(goals, env, wm, gvars, level+1)
+        elif isinstance(goal, bool) and not goal:
+            return False
+
         key = self.make_key(goal)
         iteratorBcr = self.bcr[key].__iter__()
         #kbRule = iteratorBcr.next()
@@ -171,16 +178,16 @@ class KB:
             freshRule = copy.deepcopy(kbRule)
             frvars = self.get_variables(freshRule)
 
-            print " > frvars=",self.printRule(frvars)
+            # print " > frvars=",self.printRule(frvars)
             
             for i in frvars:
                 i.rename(level)
 
-            print " > i=",self.printRule(kbRule[0])
-            print " > j=",self.printRule(freshRule[0])
-            print " > goal=",self.printRule(goal)
-            print " > env=",self.printRule(env)
-            print " > gvars=",self.printRule(gvars)
+            # print " > i=",self.printRule(kbRule[0])
+            # print " > j=",self.printRule(freshRule[0])
+            # print " > goal=",self.printRule(goal)
+            # print " > env=",self.printRule(env)
+            # print " > gvars=",self.printRule(gvars)
 
             newenv = {}
             newenv.update(env) #{}
@@ -199,43 +206,46 @@ class KB:
                 else:
                     newenv.update(q)
 
-            print " !> newenv=",self.printRule(newenv), "TEST",str(test)
-            print ""
+            # print " !> newenv=",self.printRule(newenv), "TEST",str(test)
+            # print ""
             
             if test:
                 newgoals = copy.deepcopy(goals)
                 
-                print " !> freshRule[1]=",self.printRule(freshRule[1])
+                # print " !> freshRule[1]=",self.printRule(freshRule[1])
                 
-                if not isinstance(freshRule[1], bool):
-                    newgoals.insert(0,freshRule[1])
+                #if not isinstance(freshRule[1], bool):
+                newgoals.insert(0,freshRule[1])
 
-                print " !> newgoals=",self.printRule(newgoals)
+                # print " !> newgoals=",self.printRule(newgoals)
                 # stdin.readline()
 
                 if self.bcprove(newgoals, newenv, wm, gvars, level+1):
                     return True
-                else:
-                    print "BACKTRACK - level", level
+                # else:
+                #     print "BACKTRACK - level", level
 
         return False
 
     def bcprove(self,goals,env,wm,gvars,level):
         elements = []
 
-        for goal in goals:    
-            if type(goal[0]) == type((1, )):
+        for goal in goals:
+            if isinstance(goal, bool):
+                elements.append(goal)
+            elif type(goal[0]) == type((1, )):
                 for tup in goal:
                     elements.append(tup)
             else:
                 elements.append(goal)
 
-        print "\n#", level, "#", elements
+        print "\n#", level, "#", self.printRule(elements)
 
-        if len(elements) == 0:
+        #if len(elements) == 0:
+        if len(elements) == 1 and isinstance(elements[0], bool):
             printer = Printer()
 
-            print "True\n"
+            print elements[0]
 
             for x in gvars:
                 #if isinstance(x, Variable):
