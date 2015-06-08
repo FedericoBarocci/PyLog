@@ -71,7 +71,7 @@ def defrules(kb):
 	kb.defsym("same_length")
 
 	(same_length, [], []) |IF| True
-	(same_length, _|T1, _|T0) |IF| (same_length, T1, T0)
+	(same_length, X|T1, Y|T0) |IF| (same_length, T1, T0)
 
 
 	kb.defsym("reverse")

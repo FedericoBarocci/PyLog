@@ -1,0 +1,39 @@
+Python-Prolog interpreter
+
+Authors:
+   Antonello Antonacci
+   Federico Barocci
+   Lorenzo Vinci
+
+Usage:
+   1) Using python interactive shell:
+
+   $ cd /DIR/OF/PROJECT/
+   $ python
+   >>> from prologsh import *
+   >>> kb=KB()
+   >>> kb.defvar('X')
+   >>> kb.defvar('Y')
+   >>> kb.defvar('T')
+   >>> kb.defvar('U')
+   ...
+   >>> kb.defsym("append")
+   ...
+   >>> (append, [], X, X) |IF| True
+   >>> (append, X|T, Y, X|U) |IF| (append, T, Y, U)
+   ...
+   >>> kb.prove([(append, [1, 2], [3], X)])
+   
+   
+   2) Usign python files with rules and/or goals for automatic direct tests
+   $ cd /DIR/OF/PROJECT/
+   $ chmod +x bin/prolog.sh
+   $ bin/prolog.sh [-r FILE_RULES] [-i FILE_GOALS]
+   
+   eg: $ bin/prolog.sh -r prolog/rules/lists.py -i prolog/tests/testlist.py
+   
+   N.B. 
+   Parameters -r and -i are optional.
+   If not provided then will be used the default files.
+   For defining custom files see PROJECTPATH/prolog/rules/ and PROJECTPATH/prolog/tests/
+   
