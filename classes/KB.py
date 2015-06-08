@@ -1,11 +1,11 @@
 import copy
-from sys import stdin
 
 from Variable import Variable
 from Printer import Printer
 from FSymbol import FSymbol
 from Unify import Unify
 from Cons import Cons
+from Cut import Cut
 
 class KB:
     """"A common Working Memory following the OCML style 
@@ -24,44 +24,10 @@ class KB:
     def make_key(self,tuple):
         return str(tuple[0])+str(len(tuple)-1)
 
-    def printRule(self, element):
-        if element == None:
-            return str(None)
-        elif isinstance(element, str) or isinstance(element, int) or isinstance(element, bool):
-            return str(element)
-        elif isinstance(element, Variable):# or isinstance(element, instance):
-            return element.__str__()
-        elif (isinstance(element,Cons)):
-            return " | ".join( [ self.printRule(element.car), self.printRule(element.cdr) ])
-
-        list = []
-        
-        if type(element) == type([]):
-            for i in element:
-                list.append(self.printRule(i))
-            return "[" + ", ".join(list) + "]"
-
-        if type(element) == type({}):
-            for i in element:
-                list.append( self.printRule(i) + " : " + self.printRule(element[i]) )
-            return "{" + ", ".join(list) + "}"
-
-        #print type(element)
-        for i in element:
-            if (isinstance(i,Cons)):
-                list.append( " | ".join( [ self.printRule(i.car), self.printRule(i.cdr) ]))
-            elif type(i) == type((1, )):
-                list.append(str(self.printRule(i)))
-            else:
-                #print type(i)
-                list.append(str(i))
-
-        return "(" + ", ".join(list) + ")"
-
-    def printRules(self):
+    def printAllRules(self):
         for key in self.bcr:
             for element in self.bcr[key]:
-                print self.printRule(element[0]) + " :- " + self.printRule(element[1]) + "."
+                print " ", Printer().deref(element[0], {}), ":-", str(Printer().deref(element[1], {})) + "."
         
         print ""
 
@@ -93,6 +59,9 @@ class KB:
         self.wm.setdefault(key,[]).append(tuple)
 
     def make_bc_rule(self,head, body):
+        if head == "cut":
+            return
+
         key = self.make_key(head)
         self.bcr.setdefault(key,[]).append((head,body))
 
@@ -128,106 +97,64 @@ class KB:
         "Remove the sentence from the KB"
         abstract
 
-    def makeResolvent(self, clausole, unificator):
-        resolvent = ()
-
-        for i in clausole:
-            if str(i) in unificator:
-                resolvent += (unificator[str(i)],)
-            else:
-                resolvent += (i,)
-
-        return resolvent
-
     # Prove backward rules, if wm is True it also checks
     # ground facts in the wm.
-    def prove(self, goals, wm=False):
-        gvars = self.get_variables(goals)        
-        if not self.bcprove(goals, {}, wm, gvars, 0):
-            print "False"
-
-# Schema for backward proof.
-# bcprove(self,goals,env,wm,gvars,ret_fun)
-# goals --> prolog query
-# env
-# wm --> bolean value, use or not use wm facts in the prove.
-# gvars --> goal variables
-# ret_fun --> function to return at the end (optional).
-
-
-    def resolvetuple(self, goals, env, wm, gvars, level):
+    def prove(self, goals):
+        print "?-", Printer().deref(goals,{})
         
+        Cut().reset()
+        gvars = self.get_variables(goals)
+        result = self.bcprove(goals, {}, gvars, 0)
 
-        #for goal in goals:
+        print Printer().deref(result,{}), "\n"
+
+        return result
+
+    def solve(self, goals, env, gvars, level):
         goal = goals.pop(0)
 
-        if isinstance(goal, bool) and goal:
-            #self.resolvetuple(goals, env, wm, gvars, level)
-            return self.bcprove(goals, env, wm, gvars, level+1)
-        elif isinstance(goal, bool) and not goal:
-            return False
+        if isinstance(goal, bool):
+            return self.bcprove(goals, env, gvars, level+1)
+        elif isinstance(goal, tuple) and goal[0].name is "cut":
+            goals.insert(0, goal[1])
+            result = self.bcprove(goals, env, gvars, level+1)
+            Cut().set()
+            return result
 
         key = self.make_key(goal)
         iteratorBcr = self.bcr[key].__iter__()
-        #kbRule = iteratorBcr.next()
-
-        unifier = Unify()
         
         for kbRule in iteratorBcr:
-
             freshRule = copy.deepcopy(kbRule)
-            frvars = self.get_variables(freshRule)
-
-            # print " > frvars=",self.printRule(frvars)
+            freshvars = self.get_variables(freshRule)
             
-            for i in frvars:
+            for i in freshvars:
                 i.rename(level)
 
-            # print " > i=",self.printRule(kbRule[0])
-            # print " > j=",self.printRule(freshRule[0])
-            # print " > goal=",self.printRule(goal)
-            # print " > env=",self.printRule(env)
-            # print " > gvars=",self.printRule(gvars)
-
             newenv = {}
-            newenv.update(env) #{}
+            newenv.update(env)
             test = True
 
             for i in range(len(freshRule[0])):
-                if type(goal[0]) == type((1, )):
-                    q = unifier.unify(freshRule[0][i], goal[0][i], newenv)
-                else:
-                    q = unifier.unify(freshRule[0][i], goal[i], newenv)
-                #q = unifier.unify(freshRule[0][i], goal[i], newenv) 
-                #print self.printRule(q)
+                q = Unify().unify(freshRule[0][i], goal[i], newenv)
+
                 if q is None:
                     test = False
-                    #break
+                    break
                 else:
                     newenv.update(q)
-
-            # print " !> newenv=",self.printRule(newenv), "TEST",str(test)
-            # print ""
             
             if test:
                 newgoals = copy.deepcopy(goals)
-                
-                # print " !> freshRule[1]=",self.printRule(freshRule[1])
-                
-                #if not isinstance(freshRule[1], bool):
-                newgoals.insert(0,freshRule[1])
+                newgoals.insert(0, freshRule[1])
+                result = self.bcprove(newgoals, newenv, gvars, level+1)
 
-                # print " !> newgoals=",self.printRule(newgoals)
-                # stdin.readline()
-
-                if self.bcprove(newgoals, newenv, wm, gvars, level+1):
-                    return True
-                # else:
-                #     print "BACKTRACK - level", level
+                if Cut().test() or result:
+                    return result
 
         return False
 
-    def bcprove(self,goals,env,wm,gvars,level):
+    def bcprove(self,goals,env,gvars,level):
         elements = []
 
         for goal in goals:
@@ -239,29 +166,15 @@ class KB:
             else:
                 elements.append(goal)
 
-        print "\n#", level, "#", self.printRule(elements)
-
-        #if len(elements) == 0:
         if len(elements) == 1 and isinstance(elements[0], bool):
-            printer = Printer()
-
+            if not elements[0]:
+                return False
+            
             print elements[0]
 
             for x in gvars:
-                #if isinstance(x, Variable):
-                print x.name+": "+str(printer.deref(x, env))
+                print x.name+": "+str(Printer().deref(x, env))
             
-            if printer.query_yes_no("more solutions?","no")== "no":
-                return True
-            else:
-                return False
+            return Printer().query_yes_no("more solutions?","no") == "no"
 
-        return self.resolvetuple(elements,env,wm,gvars,level)
-
-            # if result == None:
-            #     test = False
-            # elif isinstance(result, bool):
-            #     return result
-            # else:
-            #     newenv.update(result)
-            
+        return self.solve(elements,env,gvars,level) 

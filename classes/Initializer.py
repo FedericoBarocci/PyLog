@@ -8,6 +8,7 @@ from Variable import Variable
 from FSymbol import FSymbol
 from LOperator import LOperator
 from KB import KB
+from Cut import Cut
 
 """Symbolic global constants, like. 'None', 'NOT_FOUND', etc."""
 
@@ -56,6 +57,7 @@ def init():
     # initializing built-in logic operators
     # this operators are reserved for the python AI module
     # a variant of the manchester OWL syntax is used for description logic
+
     defsym("is_a")
     defsym("builtin_type")
     defsym("default_value")
