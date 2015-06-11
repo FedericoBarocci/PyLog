@@ -81,7 +81,8 @@ class KB:
 	def printAllRules(self):
 		for key in self.bcr:
 			for element in self.bcr[key]:
-				print " ", Printer().deref(element[0], {}), ":-", str(Printer().deref(element[1], {})) + "."
+				#print " ", Printer().deref(element[0], {}), ":-", str(Printer().deref(element[1], {})) + "."
+				print " ", Printer().printRule(element[0]), ":-", str(Printer().printRule(element[1])) + "."
 		
 		print ""
 

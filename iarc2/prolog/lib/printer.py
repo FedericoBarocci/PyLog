@@ -78,3 +78,35 @@ class Printer:
 				return valid[choice]
 			else:
 				sys.stdout.write("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
+
+	def printRule(self, element):
+		if element is None:
+			return str(None)
+		elif isinstance(element, str) or isinstance(element, int) or isinstance(element, bool):
+			return str(element)
+		elif isinstance(element, Variable):
+			return element.__str__()
+		elif (isinstance(element,Cons)):
+			return " | ".join( [ self.printRule(element.car), self.printRule(element.cdr) ])
+
+		list = []
+		
+		if type(element) is type([]):
+			for i in element:
+				list.append(self.printRule(i))
+			return "[" + ", ".join(list) + "]"
+
+		if type(element) is type({}):
+			for i in element:
+				list.append( self.printRule(i) + " : " + self.printRule(element[i]) )
+			return "{" + ", ".join(list) + "}"
+
+		for i in element:
+			if (isinstance(i,Cons)):
+				list.append( " | ".join( [ self.printRule(i.car), self.printRule(i.cdr) ]))
+			elif type(i) is type((1, )):
+				list.append(str(self.printRule(i)))
+			else:
+				list.append(str(i))
+
+		return "(" + ", ".join(list) + ")"
